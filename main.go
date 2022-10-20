@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dos2/coreapps"
 	_ "dos2/coreapps/macro"
 	"encoding/json"
 	"fmt"
@@ -34,7 +35,14 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/blog/", http.StripPrefix(fmt.Sprintf("/%s", "blog"), nil))
+	for _, k := range coreapps.Apps() {
+		slug := coreapps.GetSlug(k)
+		mux.Handle(
+			fmt.Sprintf("/%s/", slug),
+			http.StripPrefix(
+				fmt.Sprintf("/%s", slug),
+				coreapps.GetRoutes(k)))
+	}
 
 	err = http.ListenAndServe(":8000", mux)
 	if err != nil {

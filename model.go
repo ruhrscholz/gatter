@@ -13,7 +13,7 @@ const (
 
 type User struct {
 	gorm.Model
-	Username        string
+	Username        string `gorm:"index"`
 	Name            string
 	PermissionLevel PermissionLevel
 	Pronouns        string
