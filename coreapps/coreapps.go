@@ -1,6 +1,7 @@
 package coreapps
 
 import (
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 )
@@ -12,6 +13,7 @@ var (
 type CoreApp interface {
 	GetRoutes() *http.ServeMux
 	GetSlug() string
+	InitDb(*gorm.DB)
 }
 
 func Register(name string, coreapp CoreApp) {
@@ -46,4 +48,10 @@ func GetRoutes(app string) *http.ServeMux {
 
 func GetSlug(app string) string {
 	return apps[app].GetSlug()
+}
+
+func InitDbs(db *gorm.DB) {
+	for _, k := range Apps() {
+		apps[k].InitDb(db)
+	}
 }

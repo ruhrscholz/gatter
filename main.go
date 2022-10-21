@@ -3,8 +3,11 @@ package main
 import (
 	"dos2/coreapps"
 	_ "dos2/coreapps/macro"
+	"dos2/model"
 	"encoding/json"
 	"fmt"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +19,7 @@ type configOptions struct {
 }
 
 func main() {
+	// Config file parsing
 	configFile, err := os.ReadFile("./configs/config.development.json")
 	if err != nil {
 		log.Fatalf("Could not open config file: %s", err)
@@ -33,6 +37,20 @@ func main() {
 		log.Printf("Language Code: %s", config.Language)
 	}
 
+	// Database setup
+	db, err := gorm.Open(sqlite.Open("dos2.db"), &gorm.Config{})
+	if err != nil {
+		log.Panic("main: Database connection failed")
+	}
+
+	err = db.AutoMigrate(&model.User{})
+	if err != nil {
+		log.Panic("main: Database migration failed for User model")
+	}
+
+	coreapps.InitDbs(db)
+
+	// Route registration
 	mux := http.NewServeMux()
 
 	for _, k := range coreapps.Apps() {
