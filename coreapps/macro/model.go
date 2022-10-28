@@ -1,7 +1,7 @@
 package macro
 
 import (
-	"dos2/model"
+	"gatter/model"
 	"gorm.io/gorm"
 	"time"
 )

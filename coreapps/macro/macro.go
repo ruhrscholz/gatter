@@ -1,7 +1,7 @@
 package macro
 
 import (
-	"dos2/coreapps"
+	"gatter/coreapps"
 	"fmt"
 	"gorm.io/gorm"
 	"log"

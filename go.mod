@@ -1,4 +1,4 @@
-module dos2
+module gatter
 
 go 1.19
 

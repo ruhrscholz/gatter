@@ -1,9 +1,9 @@
 package main
 
 import (
-	"dos2/coreapps"
-	_ "dos2/coreapps/macro"
-	"dos2/model"
+	"gatter/coreapps"
+	_ "gatter/coreapps/macro"
+	"gatter/model"
 	"encoding/json"
 	"fmt"
 	"gorm.io/driver/sqlite"
@@ -38,7 +38,7 @@ func main() {
 	}
 
 	// Database setup
-	db, err := gorm.Open(sqlite.Open("dos2.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("gatter.db"), &gorm.Config{})
 	if err != nil {
 		log.Panic("main: Database connection failed")
 	}
