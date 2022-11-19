@@ -1,4 +1,5 @@
 {
   "language": "en",
-  "singleUser": true
+  "singleUser": true,
+  "sessionToken": "changeme"
 }
