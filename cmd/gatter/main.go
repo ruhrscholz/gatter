@@ -1,14 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
-	"gatter/internal/api"
+	v1 "gatter/internal/api/v1"
+	. "gatter/internal/env"
 	"gatter/internal/webfinger"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
@@ -40,16 +43,25 @@ func main() {
 		log.Panic("Please change the default session token before attempting to start the server")
 	}
 
-	m, err := migrate.New(
+	db, err := sql.Open("pgx", "postgres://localhost:5432/gatter") // TODO Move to config file
+	if err != nil {
+		log.Panicf("Could not establish database connection: %s", err.Error())
+	}
+
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	m, err := migrate.NewWithDatabaseInstance(
 		"file://db/migrations",
-		"postgres://localhost:5432/gatter") // TODO Move to config file
-	m.Steps(2)
+		"postgres",
+		driver)
+	m.Up()
+
+	env := Env{Db: db}
 
 	// Route registration
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/.well-known/webfinger", webfinger.Handle)
-	mux.Handle("/api", api.GetApiRoutes())
+	mux.HandleFunc("/.well-known/webfinger", webfinger.Handle(env))
+	mux.Handle("api/v1/", v1.GetRoutes(env))
 
 	err = http.ListenAndServe(":8000", mux)
 	if err != nil {

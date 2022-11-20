@@ -15,6 +15,6 @@ type Status struct {
 	ReblogsCount   int
 	FavoritesCount int
 
-	InReplyTo Status
-	Reblog    Status
+	InReplyTo string
+	Reblog    string
 }

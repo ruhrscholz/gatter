@@ -1,7 +1,12 @@
 package webfinger
 
-import "net/http"
+import (
+	. "gatter/internal/env"
+	"net/http"
+)
 
-func Handle(w http.ResponseWriter, r *http.Request) {
-
+func Handle(env *Env) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		domain := r.Host
+	}
 }

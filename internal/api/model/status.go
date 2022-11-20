@@ -16,12 +16,12 @@ type Status struct {
 
 	// Informational
 	ReblogsCount    uint `json:"reblogs_count"`
-	FavouritesCount uint `json:"favourites_count"` // British englich because why should anything be consistent?
+	FavouritesCount uint `json:"favourites_count"` // British english because why should anything be consistent?
 
 	// Nullable
 	Url         string `json:"url"`
 	InReplyToId string `json:"in_reply_to_id"`
-	Reblog      Status `json:"reblog"`
+	Reblog      string `json:"reblog"`
 
 	// Authorized
 	Favourited bool `json:"favourited"`

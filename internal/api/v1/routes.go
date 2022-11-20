@@ -1,8 +1,14 @@
 package v1
 
-import "net/http"
+import (
+	. "gatter/internal/env"
+	"net/http"
+)
 
-func GetV1Routes() *http.ServeMux {
+var env *Env
+
+func GetRoutes(_env *Env) *http.ServeMux {
+	env = _env
 	mux := http.NewServeMux()
 
 	mux.Handle("timelines/", getTimelinesRoutes())

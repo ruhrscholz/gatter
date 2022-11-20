@@ -2,9 +2,9 @@ CREATE TABLE IF NOT EXISTS accounts
 (
     account_id BIGSERIAL PRIMARY KEY,
     display_name TEXT,
-    fed_username TEXT NOT NULL;
-    fed_domain VARCHAR(255) NOT NULL;
-    uri TEXT UNIQUE NOT NULL,
+    fed_username TEXT NOT NULL,
+    fed_domain VARCHAR(255) NOT NULL,
+        UNIQUE (fed_username, fed_domain),
     url TEXT NOT NULL
 );
 
