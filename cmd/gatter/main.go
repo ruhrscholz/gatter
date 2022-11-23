@@ -6,7 +6,8 @@ import (
 	"gatter/internal/client"
 	"gatter/internal/environment"
 	"gatter/internal/middleware"
-	"gatter/internal/webfinger"
+	"gatter/internal/s2s"
+	"gatter/internal/wellknown"
 	"log"
 	"net/http"
 	"os"
@@ -83,7 +84,14 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/.well-known/webfinger", middleware.GetUser(webfinger.Handle(&env)))
+	webfingerHandler := wellknown.SetUpWebfinger(&env)
+	mux.Handle("/.well-known/webfinger", middleware.UserContext(&env, webfingerHandler))
+
+	nodeinfoHandler := wellknown.SetUpNodeinfo(&env)
+	mux.Handle("/.well-known/nodeinfo", nodeinfoHandler)
+
+	s2sHandler := s2s.SetUp(&env)
+	mux.Handle("/users/", middleware.UserContext(&env, http.StripPrefix("/users/", s2sHandler)))
 
 	// This route is required by Mastodon apps and thus cannot be changed
 	mux.Handle("api/v1/", client.GetRoutes(&env))
