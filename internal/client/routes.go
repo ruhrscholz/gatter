@@ -1,13 +1,13 @@
-package v1
+package client
 
 import (
-	. "gatter/internal/env"
+	"gatter/internal/environment"
 	"net/http"
 )
 
-var env *Env
+var env *environment.Env
 
-func GetRoutes(_env *Env) *http.ServeMux {
+func GetRoutes(_env *environment.Env) *http.ServeMux {
 	env = _env
 	mux := http.NewServeMux()
 

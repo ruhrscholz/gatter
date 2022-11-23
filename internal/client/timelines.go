@@ -1,8 +1,8 @@
-package v1
+package client
 
 import (
 	"encoding/json"
-	"gatter/internal/api/model"
+	"gatter/internal/model"
 	"net/http"
 )
 
@@ -26,6 +26,8 @@ func timelinesPublic(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(statuses)
+
+	_ = queryParams
 }
 
 func timelinesTag(w http.ResponseWriter, r *http.Request) {
