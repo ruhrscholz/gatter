@@ -3,11 +3,13 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"gatter/internal/client"
+	"gatter/internal/endpoints/activitypub/users"
+	"gatter/internal/endpoints/client"
+	"gatter/internal/endpoints/web"
+	"gatter/internal/endpoints/web/htmx"
+	wellknown2 "gatter/internal/endpoints/wellknown"
 	"gatter/internal/environment"
 	"gatter/internal/middleware"
-	"gatter/internal/s2s"
-	"gatter/internal/wellknown"
 	"log"
 	"net/http"
 	"os"
@@ -84,17 +86,21 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	webfingerHandler := wellknown.SetUpWebfinger(&env)
-	mux.Handle("/.well-known/webfinger", middleware.UserContext(&env, webfingerHandler))
+	// .well-known
+	mux.Handle("/.well-known/webfinger", middleware.UserContext(&env, wellknown2.Webfinger(&env)))
+	mux.Handle("/.well-known/nodeinfo", wellknown2.Nodeinfo(&env))
 
-	nodeinfoHandler := wellknown.SetUpNodeinfo(&env)
-	mux.Handle("/.well-known/nodeinfo", nodeinfoHandler)
+	// ActivityPub
+	mux.Handle("/users/", middleware.UserContext(&env, http.StripPrefix("/users/", users.HandleUsers(&env))))
 
-	s2sHandler := s2s.SetUp(&env)
-	mux.Handle("/users/", middleware.UserContext(&env, http.StripPrefix("/users/", s2sHandler)))
+	// Client
+	mux.Handle("/api/v1/accounts/", middleware.UserContext(&env, http.StripPrefix("/api/v1/accounts", client.HandleAccounts(&env))))
+	mux.Handle("/api/v1/statuses/", middleware.UserContext(&env, http.StripPrefix("/api/v1/statuses", client.HandleStatuses(&env))))
+	mux.Handle("/api/v1/timelines/", middleware.UserContext(&env, http.StripPrefix("/api/v1/timelines", client.HandleTimelines(&env))))
 
-	// This route is required by Mastodon apps and thus cannot be changed
-	mux.Handle("api/v1/", client.GetRoutes(&env))
+	// Web (and HTMX)
+	mux.Handle("/", middleware.UserContext(&env, web.Handle(&env)))
+	mux.Handle("/htmx/", middleware.UserContext(&env, http.StripPrefix("/htmx", htmx.Handle(&env))))
 
 	err = http.ListenAndServe(":8000", mux)
 	if err != nil {

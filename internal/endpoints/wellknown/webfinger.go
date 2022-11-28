@@ -22,7 +22,7 @@ type webfingerResponse struct {
 	Links   []webfingerResponseLink `json:"link"`
 }
 
-func SetUpWebfinger(env *environment.Env) http.HandlerFunc {
+func Webfinger(env *environment.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if strings.ToLower(r.Header.Get("X-Forwarded-Proto")) != "https" && env.Deployment != environment.Development {
 			http.Error(w, "Bad Request: Only https is permitted for this path", http.StatusBadRequest)

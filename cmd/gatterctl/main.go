@@ -49,7 +49,7 @@ func main() {
 			return
 		}
 
-		statement := "INSERT INTO accounts (display_name, fed_username, fed_domain, url) VALUES ($1, $2, $3, $4)"
+		statement := "INSERT INTO accounts (display_name, fed_username, fed_domain, id) VALUES ($1, $2, $3, $4)"
 		_, err = tx.ExecContext(ctx, statement,
 			username,
 			username,

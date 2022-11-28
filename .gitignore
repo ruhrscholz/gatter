@@ -1,5 +1,4 @@
 /.idea
-/.vscode
 !/.vscode/launch.json
 /configs/config.json
 /gatter

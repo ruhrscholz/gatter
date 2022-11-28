@@ -1,11 +1,12 @@
-package wellknown
+package web
 
 import (
 	"gatter/internal/environment"
 	"net/http"
 )
 
-func SetUpNodeinfo(env *environment.Env) http.HandlerFunc {
+func Handle(env *environment.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 	}
 }

@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS accounts
     fed_username TEXT NOT NULL,
     fed_domain VARCHAR(255) NOT NULL,
         UNIQUE (fed_username, fed_domain),
-    url TEXT NOT NULL
+    id TEXT NOT NULL,
+    summary TEXT,
 );
 
 CREATE TABLE IF NOT EXISTS users(
