@@ -40,7 +40,11 @@ func main() {
 		fmt.Printf("Password: ")
 		passwordRaw, _ := reader.ReadString('\n')
 		passwordRaw = strings.TrimSpace(passwordRaw)
-		password := password.GenerateFromPlaintext("argon2", passwordRaw)
+		password, err := password.GenerateFromPlaintext("argon2", passwordRaw)
+
+		if err != nil {
+			log.Panic(err.Error())
+		}
 
 		ctx := context.Background()
 		tx, err := db.BeginTx(ctx, nil)

@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"gatter/internal/endpoints/activitypub/users"
+	"gatter/internal/endpoints/auth"
 	"gatter/internal/endpoints/client"
+	"gatter/internal/endpoints/oauth"
 	"gatter/internal/endpoints/web"
 	"gatter/internal/endpoints/web/htmx"
-	wellknown2 "gatter/internal/endpoints/wellknown"
+	"gatter/internal/endpoints/wellknown"
 	"gatter/internal/environment"
 	"gatter/internal/middleware"
 	"log"
@@ -87,14 +89,23 @@ func main() {
 	mux := http.NewServeMux()
 
 	// .well-known
-	mux.Handle("/.well-known/webfinger", middleware.UserContext(&env, wellknown2.Webfinger(&env)))
-	mux.Handle("/.well-known/nodeinfo", wellknown2.Nodeinfo(&env))
+	mux.Handle("/.well-known/webfinger", middleware.UserContext(&env, wellknown.Webfinger(&env)))
+	mux.Handle("/.well-known/nodeinfo", wellknown.Nodeinfo(&env))
+
+	// Auth
+	mux.Handle("/auth/sign_in", middleware.UserContext(&env,
+		middleware.Auth(&env, auth.HandleSignIn(&env))))
+
+	// Oauth
+	mux.Handle("/oauth/authorize", middleware.UserContext(&env, http.StripPrefix("/oauth/authorize", oauth.HandleAuthorize(&env))))
+	mux.Handle("/oauth/token", middleware.UserContext(&env, http.StripPrefix("/oauth/token", oauth.HandleToken(&env))))
 
 	// ActivityPub
 	mux.Handle("/users/", middleware.UserContext(&env, http.StripPrefix("/users/", users.HandleUsers(&env))))
 
 	// Client
 	mux.Handle("/api/v1/accounts/", middleware.UserContext(&env, http.StripPrefix("/api/v1/accounts", client.HandleAccounts(&env))))
+	mux.Handle("/api/v1/apps/", middleware.UserContext(&env, http.StripPrefix("/api/v1/apps", client.HandleApps(&env))))
 	mux.Handle("/api/v1/statuses/", middleware.UserContext(&env, http.StripPrefix("/api/v1/statuses", client.HandleStatuses(&env))))
 	mux.Handle("/api/v1/timelines/", middleware.UserContext(&env, http.StripPrefix("/api/v1/timelines", client.HandleTimelines(&env))))
 

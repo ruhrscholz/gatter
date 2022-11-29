@@ -46,3 +46,6 @@ type Status struct {
 	Favourited bool `json:"favourited"`
 	Reblogged  bool `json:"reblogged"`
 }
+
+type Application struct {
+}

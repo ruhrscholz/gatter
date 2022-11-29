@@ -19,7 +19,7 @@ func HandleUsers(_env *environment.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := strings.Split(r.URL.Path, "/")
 
-		username := r.Context().Value(middleware.KeyValidUsername).(string)
+		username := r.Context().Value(middleware.KeyDomainsUsername).(string)
 
 		if !strings.EqualFold(path[0], username) {
 			http.NotFound(w, r)
@@ -64,15 +64,15 @@ func basePath(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/activity+json; charset=utf-8")
 		domain := r.Context().Value(middleware.KeyDomain)
-		username := r.Context().Value(middleware.KeyValidUsername)
-		accountId := r.Context().Value(middleware.KeyValidAccount)
+		username := r.Context().Value(middleware.KeyDomainsUsername)
+		userId := r.Context().Value(middleware.KeyDomainsUserId)
 
 		var displayName string
-		stmt := "SELECT display_name FROM accounts WHERE account_id=$1"
-		rows := env.Db.QueryRow(stmt, accountId)
+		stmt := "SELECT accounts.display_name FROM accounts INNER JOIN users ON users.account_id=accounts.account_id WHERE users.user_id=$1"
+		rows := env.Db.QueryRow(stmt, userId)
 
 		if err := rows.Scan(&displayName); err == sql.ErrNoRows {
-			errText := fmt.Sprintf("No rows returned for statement \"%s\", account_id %d even though that row should exist", stmt, accountId)
+			errText := fmt.Sprintf("No rows returned for statement \"%s\", user_id %d even though that row should exist", stmt, userId)
 			log.Panic(errText)
 			if env.Deployment == environment.Development {
 				http.Error(w, errText, http.StatusInternalServerError)
@@ -94,6 +94,6 @@ func basePath(w http.ResponseWriter, r *http.Request) {
 		}
 		json.NewEncoder(w).Encode(response)
 	} else {
-		http.Redirect(w, r, fmt.Sprintf("https://%s/@%s", r.Context().Value(middleware.KeyDomain), r.Context().Value(middleware.KeyValidUsername)), http.StatusMovedPermanently)
+		http.Redirect(w, r, fmt.Sprintf("https://%s/@%s", r.Context().Value(middleware.KeyDomain), r.Context().Value(middleware.KeyDomainsUsername)), http.StatusMovedPermanently)
 	}
 }

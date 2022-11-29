@@ -13,11 +13,12 @@ import (
 type contextKey int
 
 const (
-	KeyValidUsername contextKey = iota
+	KeyDomainsUsername contextKey = iota
+	KeyDomainsUserId
 	KeyDomain
-	KeyValidAccount
 )
 
+// TODO Maybe eliminate this middleware and JOIN on other SQL queries to reduce TTFB?
 func UserContext(env *environment.Env, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -33,12 +34,12 @@ func UserContext(env *environment.Env, next http.Handler) http.Handler {
 			return
 		}
 
-		stmt := "SELECT username, account_id FROM users WHERE domain=$1"
+		stmt := "SELECT username, user_id FROM users WHERE domain=$1"
 		rows := env.Db.QueryRow(stmt, host)
 
 		var validUsername string
-		var validAccount int64
-		if err := rows.Scan(&validUsername, &validAccount); err == sql.ErrNoRows {
+		var validUserId int
+		if err := rows.Scan(&validUsername, &validUserId); err == sql.ErrNoRows {
 			http.NotFound(w, r)
 			return
 		} else if err != nil {
@@ -52,9 +53,9 @@ func UserContext(env *environment.Env, next http.Handler) http.Handler {
 			return
 		}
 
-		nctx := context.WithValue(r.Context(), KeyValidUsername, validUsername)
+		nctx := context.WithValue(r.Context(), KeyDomainsUsername, validUsername)
+		nctx = context.WithValue(nctx, KeyDomainsUserId, validUserId)
 		nctx = context.WithValue(nctx, KeyDomain, host)
-		nctx = context.WithValue(nctx, KeyValidAccount, validAccount)
 
 		next.ServeHTTP(w, r.WithContext(nctx))
 	})

@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS accounts
     fed_domain VARCHAR(255) NOT NULL,
         UNIQUE (fed_username, fed_domain),
     id TEXT NOT NULL,
-    summary TEXT,
+    summary TEXT
 );
 
 CREATE TABLE IF NOT EXISTS users(
@@ -16,6 +16,19 @@ CREATE TABLE IF NOT EXISTS users(
     domain VARCHAR(255) UNIQUE, -- https://www.rfc-editor.org/rfc/rfc3986
     account_id BIGINT NOT NULL,
         CONSTRAINT fk_account FOREIGN KEY(account_id) REFERENCES accounts(account_id)
+);
+
+CREATE TABLE IF NOT EXISTS sessions(
+    session_id BYTEA PRIMARY KEY,
+    user_id INT NOT NULL,
+        CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS applications(
+    app_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    scope TEXT NOT NULL,
+    website TEXT
 );
 
 CREATE TABLE IF NOT EXISTS statuses(
