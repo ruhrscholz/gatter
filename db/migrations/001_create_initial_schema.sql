@@ -1,3 +1,5 @@
+-- Write your migrate up statements here
+
 CREATE TABLE IF NOT EXISTS accounts
 (
     account_id BIGSERIAL PRIMARY KEY,
@@ -58,3 +60,17 @@ CREATE TABLE IF NOT EXISTS favorites(
 );
 
 -- We don't need a reblog table since we can *hopefully* get that one at request time from status(reblogs_count) and status(reblog)
+
+
+---- create above / drop below ----
+
+DROP TABLE IF EXISTS favorites;
+DROP TABLE IF EXISTS statuses;
+DROP INDEX IF EXISTS ind_statuses_public_id;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS accounts;
+DROP TABLE IF EXISTS applications;
+
+-- Write your migrate down statements here. If this migration is irreversible
+-- Then delete the separator line above.

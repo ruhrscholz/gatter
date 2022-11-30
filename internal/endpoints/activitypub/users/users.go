@@ -82,8 +82,7 @@ func basePath(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response := activitypub.ActorResponse{
-			Context:   []string{"https://www.w3.org/ns/activitystreams"},
-			Type:      "Person",
+			Context: []string{"https://www.w3.org/ns/activitystreams"}, Type: "Person",
 			Name:      displayName,
 			Id:        fmt.Sprintf("https://%s/users/%s", domain, username),
 			Inbox:     fmt.Sprintf("https://%s/users/%s/inbox", domain, username),

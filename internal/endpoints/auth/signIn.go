@@ -102,9 +102,22 @@ func HandleSignIn(env *environment.Env) http.HandlerFunc {
 				token := make([]byte, 32)
 				rand.Read(token)
 
+				stmt := "INSERT INTO sessions (session_id, user_id) VALUES ($1, $2)"
+				_, err := env.Db.Exec(stmt, fmt.Sprintf("\\x%x", token), r.Context().Value(middleware.KeyDomainsUserId))
+				if err != nil {
+					errText := fmt.Sprintf("Could not insert session token into database: %s", err.Error())
+					if env.Deployment == environment.Development {
+						http.Error(w, errText, http.StatusInternalServerError)
+					} else {
+						http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+					}
+				}
+
 				http.SetCookie(w, &http.Cookie{
-					Name:  "session_id",
-					Value: fmt.Sprintf("%x", token),
+					Name:     "session_id",
+					Value:    fmt.Sprintf("%x", token),
+					Secure:   true,
+					HttpOnly: true,
 				})
 				http.Redirect(w, r, redirectUri, http.StatusFound)
 				return

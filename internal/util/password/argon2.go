@@ -38,7 +38,7 @@ func argon2GenerateFromPlaintext(password string) string {
 		params.iterations,
 		params.parallelism,
 		base64.RawStdEncoding.EncodeToString(salt),
-		base64.RawURLEncoding.EncodeToString(hash))
+		base64.RawStdEncoding.EncodeToString(hash))
 }
 
 func argon2Validate(input string, correct string) bool {
@@ -50,7 +50,7 @@ func argon2Validate(input string, correct string) bool {
 	params := argon2Params{}
 
 	var version int
-	_, err := fmt.Sscanf(split[2], "v=%d", version)
+	_, err := fmt.Sscanf(split[2], "v=%d", &version)
 	if err != nil || version > argon2.Version {
 		return false
 	}
@@ -66,7 +66,7 @@ func argon2Validate(input string, correct string) bool {
 	}
 	params.saltLength = uint32(len(salt))
 
-	hash, err := base64.RawStdEncoding.Strict().DecodeString(split[4])
+	hash, err := base64.RawStdEncoding.Strict().DecodeString(split[5])
 	if err != nil {
 		return false
 	}
@@ -74,8 +74,5 @@ func argon2Validate(input string, correct string) bool {
 
 	inputHash := argon2.IDKey([]byte(input), salt, params.iterations, params.memory, params.parallelism, params.keyLength)
 
-	if subtle.ConstantTimeCompare(inputHash, hash) == 1 {
-		return true
-	}
-	return false
+	return subtle.ConstantTimeCompare(inputHash, hash) == 1
 }

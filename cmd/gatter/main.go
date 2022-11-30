@@ -16,19 +16,13 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type configOptions struct {
-	Language     string                     `json:"language"`
-	Database     string                     `json:"database"`
-	Deployment   environment.DeploymentType `json:"deployment"`
-	SessionToken string                     `json:"sessionToken"`
+	Language   string                     `json:"language"`
+	Database   string                     `json:"database"`
+	Deployment environment.DeploymentType `json:"deployment"`
 }
 
 func main() {
@@ -60,29 +54,10 @@ func main() {
 		log.Printf("Language Code: %s", config.Language)
 	}
 
-	if config.SessionToken == "changeme" || config.SessionToken == "" {
-		log.Panic("Please change the default session token before attempting to start the server")
-	}
-
-	db, err := sql.Open("pgx", "postgres://localhost:5432/gatter") // TODO Move to config file
+	db, err := sql.Open("pgx", config.Database)
 	if err != nil {
 		log.Panicf("Could not establish database connection: %s", err.Error())
 	}
-
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		log.Printf("Error while connecting to database: %s", err.Error())
-		return
-	}
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://db/migrations",
-		"postgres",
-		driver)
-	if err != nil {
-		log.Printf("Error while preparing database migration: %s", err.Error())
-		return
-	}
-	_ = m.Up()
 
 	env.Db = db
 

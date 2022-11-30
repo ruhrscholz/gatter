@@ -1,6 +1,5 @@
 {
   "deployment": "development",
   "language": "en",
-  "sessionToken": "changeme",
   "database": "postgres://localhost:5432/gatter"
 }
