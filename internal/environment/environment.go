@@ -10,7 +10,9 @@ const (
 )
 
 type Env struct {
-	Deployment DeploymentType
-	Db         *sql.DB
-	Language   string
+	Deployment  DeploymentType
+	Db          *sql.DB
+	Language    string
+	LocalDomain string
+	WebDomain   string
 }

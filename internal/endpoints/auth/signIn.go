@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"gatter/internal/environment"
-	"gatter/internal/middleware"
 	"gatter/internal/util/password"
 	"html/template"
 	"log"
@@ -14,15 +13,10 @@ import (
 
 func HandleSignIn(env *environment.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		redirectUri := r.URL.Query().Get("redirect_uri") // TODO Very bad practive and phising possibility
+		redirectUri := r.URL.Query().Get("redirect_uri") // TODO Very bad practive and phishing possibility
 
 		if redirectUri == "" {
 			redirectUri = "/"
-		}
-
-		if r.Context().Value(middleware.KeyAuthUserId) == r.Context().Value(middleware.KeyDomainsUserId) {
-			http.Redirect(w, r, redirectUri, http.StatusFound) // As per https://www.rfc-editor.org/rfc/rfc6749#section-1.7
-			return
 		}
 
 		switch r.Method {
@@ -75,12 +69,13 @@ func HandleSignIn(env *environment.Env) http.HandlerFunc {
 				return
 			}
 
-			// Check username exists (in current domain)
-			stmt := "SELECT password FROM users WHERE username=$1 AND domain=$2"
-			rows := env.Db.QueryRow(stmt, r.Form.Get("username"), r.Context().Value(middleware.KeyDomain))
+			// Check username exists
+			stmt := "SELECT user_id, password FROM users WHERE username=$1"
+			rows := env.Db.QueryRow(stmt, r.Form.Get("username"))
 
+			var userId uint
 			var correctPassword string
-			if err := rows.Scan(&correctPassword); err == sql.ErrNoRows {
+			if err := rows.Scan(&userId, &correctPassword); err == sql.ErrNoRows {
 				http.Error(w, "Wrong username or password", http.StatusUnauthorized)
 				return
 			} else if err != nil {
@@ -103,7 +98,7 @@ func HandleSignIn(env *environment.Env) http.HandlerFunc {
 				rand.Read(token)
 
 				stmt := "INSERT INTO sessions (session_id, user_id) VALUES ($1, $2)"
-				_, err := env.Db.Exec(stmt, fmt.Sprintf("\\x%x", token), r.Context().Value(middleware.KeyDomainsUserId))
+				_, err := env.Db.Exec(stmt, fmt.Sprintf("\\x%x", token), userId)
 				if err != nil {
 					errText := fmt.Sprintf("Could not insert session token into database: %s", err.Error())
 					if env.Deployment == environment.Development {

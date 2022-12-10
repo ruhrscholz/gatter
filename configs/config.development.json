@@ -1,5 +1,7 @@
 {
   "deployment": "development",
   "language": "en",
-  "database": "postgres://localhost:5432/gatter"
+  "database": "postgres://localhost:5432/gatter",
+  "local_domain": "example.com",
+  "web_domain": "gatter.example.com"
 }

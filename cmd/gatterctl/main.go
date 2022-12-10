@@ -1,11 +1,14 @@
 package main
 
+// TODO Consider spf13 CLI parser
+
 import (
 	"bufio"
 	"context"
 	"database/sql"
 	"flag"
 	"fmt"
+	"gatter/internal/util/config"
 	"gatter/internal/util/password"
 	"log"
 	"os"
@@ -15,6 +18,12 @@ import (
 )
 
 func main() {
+	env, err := config.ReadConfig("./configs/config.json")
+	if err != nil {
+		log.Fatalf("Error while parsing config file: %s", err.Error())
+		return
+	}
+
 	flag.Parse()
 
 	log.Println(flag.Arg(0))
@@ -22,20 +31,10 @@ func main() {
 
 	switch strings.ToLower(command) {
 	case "adduser":
-		db, err := sql.Open("pgx", "postgres://localhost:5432/gatter") // TODO Move to config file
-		if err != nil {
-			log.Panicf("Error while connecting to database: %s", err)
-		}
-		defer db.Close()
-
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Printf("Username: ")
 		username, _ := reader.ReadString('\n')
 		username = strings.TrimSpace(username)
-
-		fmt.Printf("Domain: ")
-		domain, _ := reader.ReadString('\n')
-		domain = strings.TrimSpace(domain)
 
 		fmt.Printf("Password: ")
 		passwordRaw, _ := reader.ReadString('\n')
@@ -47,7 +46,7 @@ func main() {
 		}
 
 		ctx := context.Background()
-		tx, err := db.BeginTx(ctx, nil)
+		tx, err := env.Db.BeginTx(ctx, nil)
 		if err != nil {
 			log.Panicf("Could not begin transaction: %s", err.Error())
 			return
@@ -57,8 +56,8 @@ func main() {
 		_, err = tx.ExecContext(ctx, statement,
 			username,
 			username,
-			domain,
-			fmt.Sprintf("https://%s/@%s", domain, username))
+			env.WebDomain,
+			fmt.Sprintf("https://%s/@%s", env.WebDomain, username))
 
 		if err != nil {
 			tx.Rollback()
@@ -66,7 +65,7 @@ func main() {
 			return
 		}
 
-		query := tx.QueryRowContext(ctx, "SELECT account_id FROM accounts WHERE fed_username = $1 AND fed_domain = $2", username, domain)
+		query := tx.QueryRowContext(ctx, "SELECT account_id FROM accounts WHERE fed_username = $1", username)
 
 		var account_id int
 		switch err := query.Scan(&account_id); err {
@@ -82,8 +81,8 @@ func main() {
 			return
 		}
 
-		statement = "INSERT INTO users(username, password, domain, account_id) VALUES ($1, $2, $3, $4)"
-		_, err = tx.ExecContext(ctx, statement, username, password, domain, account_id)
+		statement = "INSERT INTO users(username, password, account_id) VALUES ($1, $2, $3)"
+		_, err = tx.ExecContext(ctx, statement, username, password, account_id)
 
 		if err != nil {
 			tx.Rollback()

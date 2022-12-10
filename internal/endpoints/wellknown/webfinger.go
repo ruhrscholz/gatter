@@ -1,10 +1,11 @@
 package wellknown
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"gatter/internal/environment"
-	"gatter/internal/middleware"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -31,12 +32,8 @@ func Webfinger(env *environment.Env) http.HandlerFunc {
 
 		resource := strings.Split(strings.TrimPrefix(r.URL.Query().Get("resource"), "acct:"), "@")
 
-		if len(resource) == 1 && resource[0] != r.Context().Value(middleware.KeyDomainsUsername).(string) {
-			http.NotFound(w, r)
-			return
-		}
-
-		if len(resource) == 2 && (resource[0] != r.Context().Value(middleware.KeyDomainsUsername).(string) || resource[1] != r.Context().Value(middleware.KeyDomain).(string)) {
+		// Domain not recognized
+		if len(resource) == 2 && (resource[1] != env.LocalDomain && resource[1] != env.WebDomain) {
 			http.NotFound(w, r)
 			return
 		}
@@ -46,33 +43,53 @@ func Webfinger(env *environment.Env) http.HandlerFunc {
 			return
 		}
 
+		// Check username exists
+		stmt := "SELECT username FROM users WHERE username=$1"
+		rows := env.Db.QueryRow(stmt, resource[0])
+
+		// TODO Exists
+		var username string
+		if err := rows.Scan(&username); err == sql.ErrNoRows {
+			http.NotFound(w, r)
+			return
+		} else if err != nil {
+			errText := fmt.Sprintf("Could not query database for webfinger: %s", err.Error())
+			log.Print(errText)
+			if env.Deployment == environment.Development {
+				http.Error(w, errText, http.StatusInternalServerError)
+				return
+			} else {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+		}
+
 		w.Header().Set("Content-Type", "application/jrd+json")
 
 		response := webfingerResponse{
-			Subject: fmt.Sprintf("acct:%s@%s", r.Context().Value(middleware.KeyDomainsUsername), r.Context().Value(middleware.KeyDomain)), // Using the resource[0] directly should be safe since we already checked for existance in the DB,
+			Subject: fmt.Sprintf("acct:%s@%s", username, env.LocalDomain),
 			Aliases: []string{
-				fmt.Sprintf("https://%s/@%s", r.Context().Value(middleware.KeyDomain), r.Context().Value(middleware.KeyDomainsUsername)),
-				fmt.Sprintf("https://%s/users/%s", r.Context().Value(middleware.KeyDomain), r.Context().Value(middleware.KeyDomainsUsername)), // This forwards to the other link for text/html requests
+				fmt.Sprintf("https://%s/@%s", env.WebDomain, username),
+				fmt.Sprintf("https://%s/users/%s", env.WebDomain, username),
 			},
 			Links: []webfingerResponseLink{
 				{
 					Rel:   "http://webfinger.net/rel/profile-page",
 					Type_: "text/html",
-					Href:  fmt.Sprintf("https://%s/@%s", r.Context().Value(middleware.KeyDomain), r.Context().Value(middleware.KeyDomainsUsername)),
+					Href:  fmt.Sprintf("https://%s/@%s", env.WebDomain, username),
 				},
 				{
 					Rel:   "self",
 					Type_: "application/activity+json",
-					Href:  fmt.Sprintf("https://%s/users/%s", r.Context().Value(middleware.KeyDomain), r.Context().Value(middleware.KeyDomainsUsername)),
+					Href:  fmt.Sprintf("https://%s/users/%s", env.WebDomain, username),
 				},
 				{
 					Rel:      "http://ostatus.org/schema/1.0/subscribe",
-					Template: fmt.Sprintf("https://%s/authorize_interaction?uri={uri}", r.Context().Value(middleware.KeyDomain)),
+					Template: fmt.Sprintf("https://%s/authorize_interaction?uri={uri}", env.WebDomain),
 				},
 			},
 		}
 
 		json.NewEncoder(w).Encode(response)
-		return
 	}
 }
