@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"gatter/internal/environment"
+	"gatter/internal/middleware"
 	"gatter/internal/util/password"
 	"html/template"
 	"log"
@@ -17,6 +18,10 @@ func HandleSignIn(env *environment.Env) http.HandlerFunc {
 
 		if redirectUri == "" {
 			redirectUri = "/"
+		}
+
+		if r.Context().Value(middleware.KeyAuthUserId) != nil {
+			http.Redirect(w, r, redirectUri, http.StatusFound)
 		}
 
 		switch r.Method {
@@ -111,7 +116,7 @@ func HandleSignIn(env *environment.Env) http.HandlerFunc {
 				http.SetCookie(w, &http.Cookie{
 					Name:     "session_id",
 					Value:    fmt.Sprintf("%x", token),
-					Secure:   true,
+					Secure:   (env.Deployment != environment.Development),
 					HttpOnly: true,
 				})
 				http.Redirect(w, r, redirectUri, http.StatusFound)

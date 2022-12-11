@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users(
         CONSTRAINT fk_account FOREIGN KEY(account_id) REFERENCES accounts(account_id)
 );
 
-CREATE TABLE IF NOT EXISTS sessions(
+CREATE UNLOGGED TABLE IF NOT EXISTS sessions(
     session_id BYTEA PRIMARY KEY,
     user_id INT NOT NULL,
         CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(user_id)
