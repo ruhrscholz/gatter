@@ -39,10 +39,11 @@ func main() {
 	mux.Handle("/users/", http.StripPrefix("/users/", users.HandleUsers(env)))
 
 	// Client
-	mux.Handle("/api/v1/accounts/", http.StripPrefix("/api/v1/accounts", client.HandleAccounts(env)))
-	mux.Handle("/api/v1/apps/", http.StripPrefix("/api/v1/apps", client.HandleApps(env)))
-	mux.Handle("/api/v1/statuses/", http.StripPrefix("/api/v1/statuses", client.HandleStatuses(env)))
-	mux.Handle("/api/v1/timelines/", http.StripPrefix("/api/v1/timelines", client.HandleTimelines(env)))
+	client.Init(env)
+	//mux.Handle("/api/v1/accounts/", http.StripPrefix("/api/v1/accounts/", client.HandleAccounts()))
+	//mux.Handle("/api/v1/apps/", http.StripPrefix("/api/v1/apps/", client.HandleApps()))
+	//mux.Handle("/api/v1/statuses/", http.StripPrefix("/api/v1/statuses/", client.HandleStatuses()))
+	mux.Handle("/api/v1/timelines/public/", http.StripPrefix("/api/v1/timelines/public/", client.TimelinesPublic()))
 
 	// Web
 	mux.Handle("/", web.Handle(env))

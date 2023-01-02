@@ -53,15 +53,9 @@ func Webfinger(env *environment.Env) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		} else if err != nil {
-			errText := fmt.Sprintf("Could not query database for webfinger: %s", err.Error())
-			log.Print(errText)
-			if env.Deployment == environment.Development {
-				http.Error(w, errText, http.StatusInternalServerError)
-				return
-			} else {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
+			log.Printf("Could not query database for webfinger: %s", err.Error())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
 		}
 
 		w.Header().Set("Content-Type", "application/jrd+json")

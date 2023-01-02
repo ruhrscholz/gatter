@@ -8,8 +8,6 @@ import (
 	"gatter/internal/environment"
 	"net/http"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 var env *environment.Env
@@ -19,10 +17,7 @@ func HandleUsers(_env *environment.Env) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := strings.Split(r.URL.Path, "/")
 
-		// We do not check for username exitance here (and thus can not bail early), to reduce the number of DB lookups
-		subPath := strings.TrimPrefix(r.URL.Path, path[0])
-
-		switch subPath {
+		switch path[1] {
 		case "":
 			basePath(w, r, path[0])
 			return
@@ -52,8 +47,10 @@ func HandleUsers(_env *environment.Env) http.HandlerFunc {
 }
 
 func basePath(w http.ResponseWriter, r *http.Request, username string) {
-	if slices.Contains([]string{"application/json", "application/json", "application/ld+json"}, r.Header.Get("Accept")) {
-
+	switch strings.ToLower(r.Header.Get("Accept")) {
+	case "application/json":
+		fallthrough
+	case "application/ld+json":
 		w.Header().Set("Content-Type", "application/activity+json; charset=utf-8")
 
 		var displayName string
@@ -76,7 +73,7 @@ func basePath(w http.ResponseWriter, r *http.Request, username string) {
 			Likes:     fmt.Sprintf("https://%s/users/%s/likes", env.WebDomain, username),
 		}
 		json.NewEncoder(w).Encode(response)
-	} else {
+	default:
 		http.Redirect(w, r, fmt.Sprintf("https://%s/@%s", env.WebDomain, username), http.StatusMovedPermanently)
 	}
 }

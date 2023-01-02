@@ -28,12 +28,9 @@ func HandleSignOut(env *environment.Env) http.HandlerFunc {
 			stmt := "DELETE FROM sessions WHERE session_id=$1"
 			_, err := env.Db.Exec(stmt, fmt.Sprintf("\\x%x", sessionIdCookie))
 			if err != nil {
-				errText := fmt.Sprintf("Could not remove session from database: %s", err.Error())
-				if env.Deployment == environment.Development {
-					http.Error(w, errText, http.StatusInternalServerError)
-				} else {
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				}
+				log.Printf("Could not remove session from database: %s", err.Error())
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
 			}
 
 			http.SetCookie(w, &http.Cookie{
